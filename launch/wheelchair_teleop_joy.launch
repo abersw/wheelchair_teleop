@@ -9,7 +9,7 @@
     <param name="axis_angular" value="0"/>
     <param name="scale_linear_turbo" value="2.0"/>
     <rosparam param="rate">20</rosparam>
-    <remap from="/cmd_vel" to="/wheelchair_robot/cmd_vel"/>
+    <remap from="/cmd_vel" to="/wheelchair_controller/cmd_vel"/>
   </node>
 
   <node pkg="joy" type="joy_node" name="joystick">

@@ -126,7 +126,7 @@ if __name__=="__main__":
         settings = termios.tcgetattr(sys.stdin)
 
     rospy.init_node('wheelchair_teleop')
-    pub = rospy.Publisher('wheelchair_robot/cmd_vel', Twist, queue_size=10)
+    pub = rospy.Publisher('wheelchair_controller/cmd_vel', Twist, queue_size=10)
 
     turtlebot3_model = rospy.get_param("model", "burger")
 
