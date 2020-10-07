@@ -31,6 +31,7 @@ import rospy
 from geometry_msgs.msg import Twist
 import sys, select, os
 from actionlib_msgs.msg import GoalID
+from std_msgs.msg import String
 if os.name == 'nt':
   import msvcrt
 else:
@@ -122,6 +123,14 @@ def checkAngularLimitVelocity(vel):
 
     return vel
 
+def closing_teleop():
+    #cancel move base goal on space bar
+    cancel_msg = GoalID()
+    cancel_pub.publish(cancel_msg)
+    print("sent cancel goal message")
+    espeak_msg = "wheelchair disconnected"
+    espeak_line.publish(espeak_msg)
+
 if __name__=="__main__":
     if os.name != 'nt':
         settings = termios.tcgetattr(sys.stdin)
@@ -130,6 +139,7 @@ if __name__=="__main__":
     pub = rospy.Publisher('wheelchair_controller/cmd_vel', Twist, queue_size=10) #only for physical wheelchair
     #pub = rospy.Publisher('wheelchair_robot/cmd_vel', Twist, queue_size=10) #only for simulation
     cancel_pub = rospy.Publisher("/move_base/cancel", GoalID, queue_size=10)
+    espeak_line = rospy.Publisher("/espeak_node/speak_line", String, queue_size=100)
 
     turtlebot3_model = rospy.get_param("model", "burger")
 
@@ -165,10 +175,13 @@ if __name__=="__main__":
                 target_angular_vel  = 0.0
                 control_angular_vel = 0.0
                 print vels(target_linear_vel, target_angular_vel)
+            elif key == 'c' :
                 #cancel move base goal on space bar
-                #cancel_msg = GoalID()
-                #cancel_pub.publish(cancel_msg)
-                #print("sent cancel goal message")
+                cancel_msg = GoalID()
+                cancel_pub.publish(cancel_msg)
+                print("sent cancel goal message")
+                espeak_msg = "goal has been cancelled"
+                espeak_line.publish(espeak_msg)    
             else:
                 if (key == '\x03'):
                     break
@@ -189,7 +202,7 @@ if __name__=="__main__":
 
     except:
         print e
-
+        
     finally:
         twist = Twist()
         twist.linear.x = 0.0; twist.linear.y = 0.0; twist.linear.z = 0.0
@@ -198,3 +211,5 @@ if __name__=="__main__":
 
     if os.name != 'nt':
         termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
+
+    rospy.on_shutdown(closing_teleop)
