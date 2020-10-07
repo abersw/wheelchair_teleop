@@ -30,6 +30,7 @@
 import rospy
 from geometry_msgs.msg import Twist
 import sys, select, os
+from actionlib_msgs.msg import GoalID
 if os.name == 'nt':
   import msvcrt
 else:
@@ -128,6 +129,7 @@ if __name__=="__main__":
     rospy.init_node('wheelchair_teleop')
     pub = rospy.Publisher('wheelchair_controller/cmd_vel', Twist, queue_size=10) #only for physical wheelchair
     #pub = rospy.Publisher('wheelchair_robot/cmd_vel', Twist, queue_size=10) #only for simulation
+    cancel_pub = rospy.Publisher("/move_base/cancel", GoalID, queue_size=10)
 
     turtlebot3_model = rospy.get_param("model", "burger")
 
@@ -163,6 +165,10 @@ if __name__=="__main__":
                 target_angular_vel  = 0.0
                 control_angular_vel = 0.0
                 print vels(target_linear_vel, target_angular_vel)
+                #cancel move base goal on space bar
+                #cancel_msg = GoalID()
+                #cancel_pub.publish(cancel_msg)
+                #print("sent cancel goal message")
             else:
                 if (key == '\x03'):
                     break
