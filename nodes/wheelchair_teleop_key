@@ -33,6 +33,7 @@ from geometry_msgs.msg import Twist
 import sys, select, os
 from actionlib_msgs.msg import GoalID
 from std_msgs.msg import String
+from std_msgs.msg import Bool
 if os.name == 'nt':
   import msvcrt
 else:
@@ -47,7 +48,7 @@ WAFFLE_MAX_ANG_VEL = 1.82
 LIN_VEL_STEP_SIZE = 0.01
 ANG_VEL_STEP_SIZE = 0.1
 
-relayState = 0
+relayState = False
 
 msg = """
 Control Your TurtleBot3!
@@ -152,7 +153,7 @@ if __name__=="__main__":
     cancel_pub = rospy.Publisher("/move_base/cancel", GoalID, queue_size=10)
     espeak_line = rospy.Publisher("/espeak_node/speak_line", String, queue_size=100)
     relay_pub = rospy.Publisher("/motor_relay", Bool, queue_size=10)
-    relay_sub = rospy.Subscriber
+    #relay_sub = rospy.Subscriber("/motor_relay", Bool, queryRelay)
 
     turtlebot3_model = rospy.get_param("model", "burger")
 
@@ -189,11 +190,15 @@ if __name__=="__main__":
                 target_angular_vel  = 0.0
                 control_angular_vel = 0.0
                 print vels(target_linear_vel, target_angular_vel)
-            elif key == 'r':
-                if state is on:
-                    #do something
-                else:
-                    #do something else
+            elif key == 'r' :
+                if relayState == False:
+                    relayState = True
+                    relay_pub.publish(relayState)
+                    rospy.loginfo(relayState)
+                elif relayState == True:
+                    relayState = False
+                    relay_pub.publish(relayState)
+                    rospy.loginfo(relayState)
             elif key == 'c' :
                 #cancel move base goal on space bar
                 cancel_msg = GoalID()
