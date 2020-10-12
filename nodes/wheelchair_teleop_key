@@ -195,10 +195,14 @@ if __name__=="__main__":
                     relayState = True
                     relay_pub.publish(relayState)
                     rospy.loginfo(relayState)
+                    espeak_msg = "motors engaged"
+                    espeak_line.publish(espeak_msg)
                 elif relayState == True:
                     relayState = False
                     relay_pub.publish(relayState)
                     rospy.loginfo(relayState)
+                    espeak_msg = "motors disengaged"
+                    espeak_line.publish(espeak_msg)
             elif key == 'c' :
                 #cancel move base goal on space bar
                 cancel_msg = GoalID()
