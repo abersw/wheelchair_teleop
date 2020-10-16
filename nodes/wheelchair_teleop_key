@@ -197,6 +197,10 @@ if __name__=="__main__":
                 control_angular_vel = 0.0
                 print vels(target_linear_vel, target_angular_vel)
             elif key == 'r' :
+                target_linear_vel   = 0.0
+                control_linear_vel  = 0.0
+                target_angular_vel  = 0.0
+                control_angular_vel = 0.0
                 if relayState == False:
                     relayState = True
                     relay_pub.publish(relayState)
