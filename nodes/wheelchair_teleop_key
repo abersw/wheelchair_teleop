@@ -131,6 +131,12 @@ def closing_teleop():
     #cancel move base goal on space bar
     cancel_msg = GoalID()
     cancel_pub.publish(cancel_msg)
+    
+    relay_pub.publish(False)
+    rospy.loginfo("False")
+    espeak_msg = "motors disengaged"
+    espeak_line.publish(espeak_msg)
+
     print("sent cancel goal message")
     espeak_msg = "wheelchair disconnected"
     espeak_line.publish(espeak_msg)
