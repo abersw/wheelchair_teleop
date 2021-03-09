@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
 
+# Modified for use on the wheelchair
+# Contains relay safety switching for motors - this file must be opened for
+# the wheelchair to move.
+
+# Tomos Fearn
+# tof7@aber.ac.uk
+
+# This will eventually end up in the wheelchair_interface package
+
 # Copyright (c) 2011, Willow Garage, Inc.
 # All rights reserved.
 #
@@ -253,4 +262,3 @@ if __name__=="__main__":
         termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
 
     rospy.on_shutdown(closing_teleop)
- 
