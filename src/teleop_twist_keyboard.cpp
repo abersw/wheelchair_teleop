@@ -145,6 +145,10 @@ int main(int argc, char** argv) {
             printf("\rCurrent: speed %f\tturn %f | Last command: %c   ", speed, turn, key);
         }
 
+        else if (key == 'r') {
+            //switch relay on/off
+        }
+
         // Otherwise, set the robot to stop
         else {
             x = 0;
