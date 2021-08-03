@@ -164,7 +164,7 @@ if __name__=="__main__":
 
     rospy.init_node('wheelchair_teleop')
     PARAM_pub_cmd_vel = rospy.get_param("/wheelchair_robot/param/cmd_vel")
-    pub = rospy.Publisher(PARAM_pub_cmd_vel, Twist, queue_size=10) #only for physical wheelchair
+    pub = rospy.Publisher(PARAM_pub_cmd_vel, Twist, queue_size=1000) #only for physical wheelchair
     #pub = rospy.Publisher('wheelchair_robot/cmd_vel', Twist, queue_size=10) #only for simulation
     cancel_pub = rospy.Publisher("/move_base/cancel", GoalID, queue_size=10)
     espeak_line = rospy.Publisher("/espeak_node/speak_line", String, queue_size=100)
