@@ -10,6 +10,7 @@ catkin_package()
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
+  std_msgs
   roscpp
   rospy
 )

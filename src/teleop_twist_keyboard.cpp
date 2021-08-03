@@ -1,11 +1,20 @@
 #include <ros/ros.h>
 #include <geometry_msgs/Twist.h>
+#include <actionlib_msgs/GoalID.h> //library for contacting move_base
+#include <std_msgs/String.h> //library for contacting espeak
+#include <std_msgs/Bool.h> //library for toggling motor relay
 
 #include <stdio.h>
 #include <unistd.h>
 #include <termios.h>
 
 #include <map>
+
+ros::NodeHandle *ptr_nh;
+ros::Publisher *relay_pub_ptr;
+ros::Publisher *espeak_pub_ptr;
+
+bool relayState = 0; //variable to toggle motor relay
 
 // Map for movement keys
 std::map<char, std::vector<float>> moveBindings {
@@ -108,11 +117,16 @@ int main(int argc, char** argv) {
     // Init ROS node
     ros::init(argc, argv, "teleop_twist_keyboard");
     ros::NodeHandle nh;
+    ptr_nh = &nh;
 
     // Init cmd_vel publisher
     std::string cmd_topic;
     ros::param::get("/wheelchair_robot/param/cmd_vel", cmd_topic);
-    ros::Publisher pub = nh.advertise<geometry_msgs::Twist>(cmd_topic, 1);
+    ros::Publisher pub = nh.advertise<geometry_msgs::Twist>(cmd_topic, 3);
+    ros::Publisher relay_pub = nh.advertise<std_msgs::Bool>("/motor_relay", 10);
+    relay_pub_ptr = &relay_pub;
+    ros::Publisher espeak_pub = nh.advertise<std_msgs::String>("/espeak_node/speak_line", 10);
+    espeak_pub_ptr = &espeak_pub;
 
     // Create Twist message
     geometry_msgs::Twist twist;
@@ -147,6 +161,26 @@ int main(int argc, char** argv) {
 
         else if (key == 'r') {
             //switch relay on/off
+            if (relayState == 0) { //if motor relay is off
+                relayState = 1; //turn on motor relay
+                std_msgs::Bool ros_relayState;
+                ros_relayState.data = true;
+                relay_pub_ptr->publish(ros_relayState);
+
+                std_msgs::String ros_espeakMsg;
+                ros_espeakMsg.data = "motors engaged";
+                espeak_pub_ptr->publish(ros_espeakMsg);
+            }
+            else if (relayState == 1) { //if motor relay is on
+                relayState = 0; //turn off motor relay
+                std_msgs::Bool ros_relayState;
+                ros_relayState.data = false;
+                relay_pub_ptr->publish(ros_relayState);
+
+                std_msgs::String ros_espeakMsg;
+                ros_espeakMsg.data = "motors disengaged";
+                espeak_pub_ptr->publish(ros_espeakMsg);
+            }
         }
 
         // Otherwise, set the robot to stop
