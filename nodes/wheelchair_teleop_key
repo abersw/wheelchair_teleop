@@ -168,7 +168,7 @@ if __name__=="__main__":
     #pub = rospy.Publisher('wheelchair_robot/cmd_vel', Twist, queue_size=10) #only for simulation
     cancel_pub = rospy.Publisher("/move_base/cancel", GoalID, queue_size=10)
     espeak_line = rospy.Publisher("/espeak_node/speak_line", String, queue_size=100)
-    relay_pub = rospy.Publisher("/motor_relay", Bool, queue_size=10)
+    relay_pub = rospy.Publisher("/wheelchair_robot/motor_relay", Bool, queue_size=10)
     #relay_sub = rospy.Subscriber("/motor_relay", Bool, queryRelay)
 
     turtlebot3_model = rospy.get_param("model", "burger")
