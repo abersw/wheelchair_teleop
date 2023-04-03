@@ -1,4 +1,13 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+
+# Modified for use on the wheelchair
+# Contains relay safety switching for motors - this file must be opened for
+# the wheelchair to move.
+
+# Tomos Fearn
+# tof7@aber.ac.uk
+
+# This will eventually end up in the wheelchair_interface package
 
 # Copyright (c) 2011, Willow Garage, Inc.
 # All rights reserved.
@@ -28,8 +37,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import rospy
+import time
 from geometry_msgs.msg import Twist
 import sys, select, os
+from actionlib_msgs.msg import GoalID
+from std_msgs.msg import String
+from std_msgs.msg import Bool
 if os.name == 'nt':
   import msvcrt
 else:
@@ -38,11 +51,13 @@ else:
 BURGER_MAX_LIN_VEL = 1.22
 BURGER_MAX_ANG_VEL = 2.84
 
-WAFFLE_MAX_LIN_VEL = 0.26
+WAFFLE_MAX_LIN_VEL = 1.26
 WAFFLE_MAX_ANG_VEL = 1.82
 
 LIN_VEL_STEP_SIZE = 0.01
 ANG_VEL_STEP_SIZE = 0.1
+
+relayState = False
 
 msg = """
 Control Your TurtleBot3!
@@ -121,12 +136,40 @@ def checkAngularLimitVelocity(vel):
 
     return vel
 
+def closing_teleop():
+    #cancel move base goal on space bar
+    cancel_msg = GoalID()
+    cancel_pub.publish(cancel_msg)
+    #disengage motors
+    relay_pub.publish(False)
+    rospy.loginfo("False")
+    espeak_msg = "motors disengaged"
+    espeak_line.publish(espeak_msg)
+    #final message before closing down
+    print("sent cancel goal message")
+    espeak_msg = "wheelchair disconnected"
+    espeak_line.publish(espeak_msg)
+
+def opening_teleop():
+    #cancel move base goal on space bar
+    cancel_msg = GoalID()
+    cancel_pub.publish(cancel_msg)
+    print("opening teleop")
+    espeak_msg = "wheelchair connected"
+    espeak_line.publish(espeak_msg)
+
 if __name__=="__main__":
     if os.name != 'nt':
         settings = termios.tcgetattr(sys.stdin)
 
     rospy.init_node('wheelchair_teleop')
-    pub = rospy.Publisher('wheelchair_robot/cmd_vel', Twist, queue_size=10)
+    PARAM_pub_cmd_vel = rospy.get_param("/wheelchair_robot/param/cmd_vel")
+    pub = rospy.Publisher(PARAM_pub_cmd_vel, Twist, queue_size=1000) #only for physical wheelchair
+    #pub = rospy.Publisher('wheelchair_robot/cmd_vel', Twist, queue_size=10) #only for simulation
+    cancel_pub = rospy.Publisher("/move_base/cancel", GoalID, queue_size=10)
+    espeak_line = rospy.Publisher("/espeak_node/speak_line", String, queue_size=100)
+    relay_pub = rospy.Publisher("motor_relay", Bool, queue_size=10)
+    #relay_sub = rospy.Subscriber("/motor_relay", Bool, queryRelay)
 
     turtlebot3_model = rospy.get_param("model", "burger")
 
@@ -135,39 +178,65 @@ if __name__=="__main__":
     target_angular_vel  = 0.0
     control_linear_vel  = 0.0
     control_angular_vel = 0.0
-
+    time.sleep(1)
+    opening_teleop()
     try:
-        print msg
+        print(msg)
         while(1):
             key = getKey()
             if key == 'w' :
                 target_linear_vel = checkLinearLimitVelocity(target_linear_vel + LIN_VEL_STEP_SIZE)
                 status = status + 1
-                print vels(target_linear_vel,target_angular_vel)
+                print(vels(target_linear_vel,target_angular_vel))
             elif key == 'x' :
                 target_linear_vel = checkLinearLimitVelocity(target_linear_vel - LIN_VEL_STEP_SIZE)
                 status = status + 1
-                print vels(target_linear_vel,target_angular_vel)
+                print (vels(target_linear_vel,target_angular_vel))
             elif key == 'a' :
                 target_angular_vel = checkAngularLimitVelocity(target_angular_vel + ANG_VEL_STEP_SIZE)
                 status = status + 1
-                print vels(target_linear_vel,target_angular_vel)
+                print (vels(target_linear_vel,target_angular_vel))
             elif key == 'd' :
                 target_angular_vel = checkAngularLimitVelocity(target_angular_vel - ANG_VEL_STEP_SIZE)
                 status = status + 1
-                print vels(target_linear_vel,target_angular_vel)
+                print (vels(target_linear_vel,target_angular_vel))
             elif key == ' ' or key == 's' :
                 target_linear_vel   = 0.0
                 control_linear_vel  = 0.0
                 target_angular_vel  = 0.0
                 control_angular_vel = 0.0
-                print vels(target_linear_vel, target_angular_vel)
+                print (vels(target_linear_vel, target_angular_vel))
+            elif key == 'r' : 
+                #use r to toggle motor relay
+                target_linear_vel   = 0.0
+                control_linear_vel  = 0.0
+                target_angular_vel  = 0.0
+                control_angular_vel = 0.0
+                if relayState == False: #if relay state is false, engage motors
+                    relayState = True
+                    relay_pub.publish(relayState)
+                    rospy.loginfo(relayState)
+                    espeak_msg = "motors engaged"
+                    espeak_line.publish(espeak_msg)
+                elif relayState == True: #if relay state is true, disengage motors
+                    relayState = False
+                    relay_pub.publish(relayState)
+                    rospy.loginfo(relayState)
+                    espeak_msg = "motors disengaged"
+                    espeak_line.publish(espeak_msg)
+            elif key == 'c' :
+                #cancel move base goal on space bar
+                cancel_msg = GoalID()
+                cancel_pub.publish(cancel_msg)
+                print("sent cancel goal message")
+                espeak_msg = "goal has been cancelled"
+                espeak_line.publish(espeak_msg)    
             else:
                 if (key == '\x03'):
                     break
 
             if status == 20 :
-                print msg
+                print (msg)
                 status = 0
 
             twist = Twist()
@@ -181,8 +250,8 @@ if __name__=="__main__":
             pub.publish(twist)
 
     except:
-        print e
-
+        print (e)
+        
     finally:
         twist = Twist()
         twist.linear.x = 0.0; twist.linear.y = 0.0; twist.linear.z = 0.0
@@ -191,3 +260,5 @@ if __name__=="__main__":
 
     if os.name != 'nt':
         termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
+
+    rospy.on_shutdown(closing_teleop)
